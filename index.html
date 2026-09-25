@@ -50,7 +50,7 @@ button:disabled{cursor:not-allowed;opacity:.45}
 .topbar .title{flex:1;min-width:0;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .2s}
 .topbar.scrolled .title,.topbar .title.always{opacity:1}
 .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px;letter-spacing:-.01em}
-.brand i{width:10px;height:10px;border-radius:3px;background:var(--accent);transform:rotate(12deg)}
+.brand svg{flex:none;border-radius:22%;box-shadow:0 0 0 1px var(--line)}
 .iconbtn{width:42px;height:42px;flex:none;border-radius:12px;display:grid;place-items:center;background:transparent;border:0}
 .iconbtn:hover{background:var(--surface-2)}
 
@@ -201,7 +201,7 @@ h1.page{font-size:30px;line-height:1.15;font-weight:800;letter-spacing:-.025em;m
 /* Onboarding */
 .onb{position:fixed;inset:0;z-index:80;background:var(--bg);overflow:auto;padding:calc(40px + env(safe-area-inset-top,0px)) 20px calc(30px + env(safe-area-inset-bottom,0px))}
 .onb-in{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
-.logo{width:64px;height:64px;border-radius:20px;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink)}
+.logo svg{display:block;border-radius:22%;box-shadow:0 0 0 1px var(--line),var(--shadow)}
 .onb h2{font-size:30px;line-height:1.15;letter-spacing:-.03em;margin:6px 0 0;text-wrap:balance}
 .onb p{color:var(--muted);margin:0}
 .modes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -333,6 +333,8 @@ const ICONS = {
 };
 const icon = (n, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
 
+const logo = s => `<svg width="${s}" height="${s}" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#000"/><rect x="150" y="118" width="232" height="286" rx="42" fill="none" stroke="#fff" stroke-width="18" opacity=".38" transform="rotate(-9 266 261)"/><g transform="rotate(5 256 273)"><rect x="140" y="130" width="232" height="286" rx="42" fill="#fff"/><path d="M212 338V214l88 124V214" fill="none" stroke="#000" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
+
 /* ---------- Farbe & Modus ---------- */
 const mqLight = window.matchMedia ? matchMedia('(prefers-color-scheme: light)') : { matches: false };
 function applyTheme() {
@@ -391,7 +393,7 @@ function renderHome() {
   const totalDue = dueCount(db.cards);
   app.innerHTML = `
     ${topbar({ left: `<button class="iconbtn" id="menuBtn" aria-label="Menü">${icon('menu')}</button>`, title: '', right: '' })
-      .replace('<div class="title">', '<div class="title always"><div class="brand"><i></i>Notez</div>')}
+      .replace('<div class="title">', `<div class="title always"><div class="brand">${logo(28)}Notez</div>`)}
     <h1 class="page">Deine Themen</h1>
     <p class="lead">${topics.length
       ? (totalDue ? `Heute ${totalDue === 1 ? 'ist 1 Wort' : `sind ${totalDue} Wörter`} fällig.` : 'Alles wiederholt. Gut gemacht!')
@@ -772,7 +774,7 @@ function openDrawer() {
   const seg = (key, opts, col) => `<div class="seg${col ? ' col' : ''}" data-key="${key}">${opts.map(([v, l]) =>
     `<button data-v="${v}" aria-pressed="${s[key] === v}">${l}</button>`).join('')}</div>`;
   layer.innerHTML = `<div class="drawer-bg"><nav class="drawer" aria-label="Menü">
-    <div class="head"><div class="brand"><i></i>Notez</div><button class="iconbtn" id="dClose" aria-label="Menü schließen">${icon('close')}</button></div>
+    <div class="head"><div class="brand">${logo(28)}Notez</div><button class="iconbtn" id="dClose" aria-label="Menü schließen">${icon('close')}</button></div>
     <h4>Modus</h4>${seg('theme', [['dark', 'Dunkel'], ['light', 'Hell'], ['system', 'System']])}
     <h4>App-Farbe</h4><div class="swatches">${Object.entries(ACCENTS).map(([k, a]) =>
       `<button class="sw" data-accent="${k}" aria-pressed="${s.accent === k}" aria-label="${a.name}" title="${a.name}" style="--c:${document.documentElement.dataset.mode === 'light' ? a.l : a.d}"></button>`).join('')}</div>
@@ -838,7 +840,7 @@ function onboarding() {
   const el = document.createElement('div');
   el.className = 'onb';
   el.innerHTML = `<div class="onb-in">
-    <div class="logo">${icon('logo', 34)}</div>
+    <div class="logo">${logo(72)}</div>
     <h2>Willkommen bei Notez</h2>
     <p>Deine eigenen Karteikarten: Themen anlegen, Wörter eintragen und mit Karteikarten oder Quiz lernen.</p>
     <p style="color:var(--text);font-weight:700;margin-top:10px">Wie soll die App aussehen?</p>

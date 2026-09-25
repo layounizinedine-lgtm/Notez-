@@ -1,5 +1,5 @@
 // Offline-Cache: App-Dateien sofort aus dem Cache laden, im Hintergrund aktualisieren.
-const CACHE = 'notez-v1';
+const CACHE = 'notez-v2';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
