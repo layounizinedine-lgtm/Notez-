@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="de" data-mode="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0D0F13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Notez">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<!--artifact-start-->
+<title>Notez</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#0D0F13; --surface:#161920; --surface-2:#1F232C; --line:#272C37;
+  --text:#ECEEF3; --muted:#8C94A6; --faint:#586072;
+  --accent:#2EC4B0; --accent-ink:#0D0F13;
+  --accent-soft:color-mix(in srgb, var(--accent) 16%, transparent);
+  --bad:#F06868; --hard:#F2A93B; --good:#3CC47C; --easy:#5B9BFF;
+  --tile-l:66%; --shadow:0 10px 30px rgb(0 0 0 / .35);
+  --font:"Figtree","IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --arabic:"IBM Plex Sans Arabic","Figtree",system-ui,sans-serif;
+  color-scheme:dark;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+:root[data-mode="light"]{
+  --bg:#F4F5F8; --surface:#FFFFFF; --surface-2:#ECEEF3; --line:#E0E3EA;
+  --text:#141821; --muted:#5E6679; --faint:#A0A7B6;
+  --bad:#D64545; --hard:#C27D0E; --good:#1E9457; --easy:#2F6FE0;
+  --tile-l:40%; --shadow:0 10px 30px rgb(20 24 33 / .12);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 var(--font);-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ar{font-family:var(--arabic);font-size:1.15em;line-height:1.45}
+
+.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-bottom:120px}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;display:flex;align-items:center;gap:6px;height:58px;margin-inline:-16px;padding-inline:8px;background:color-mix(in srgb,var(--bg) 86%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.topbar .title{flex:1;min-width:0;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .2s}
+.topbar.scrolled .title,.topbar .title.always{opacity:1}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:18px;letter-spacing:-.01em}
+.brand i{width:10px;height:10px;border-radius:3px;background:var(--accent);transform:rotate(12deg)}
+.iconbtn{width:42px;height:42px;flex:none;border-radius:12px;display:grid;place-items:center;background:transparent;border:0}
+.iconbtn:hover{background:var(--surface-2)}
+
+.crumb{color:var(--muted);font-size:13px;font-weight:500;overflow-wrap:anywhere}
+h1.page{font-size:30px;line-height:1.15;font-weight:800;letter-spacing:-.025em;margin:6px 0 4px;text-wrap:balance;overflow-wrap:anywhere}
+.lead{color:var(--muted);margin:0}
+
+.section-h{display:flex;justify-content:space-between;align-items:baseline;margin:26px 2px 10px;font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:700}
+.section-h span{font-variant-numeric:tabular-nums;letter-spacing:.02em}
+
+/* Themen */
+.topics{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.topic{display:grid;grid-template-columns:50px 1fr auto;gap:14px;align-items:center;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:18px;text-align:start;width:100%;transition:transform .12s}
+.topic:active{transform:scale(.985)}
+.tile{width:50px;height:50px;border-radius:15px;display:grid;place-items:center;font-weight:800;font-size:21px;background:hsl(var(--h) 65% 55% / .16);color:hsl(var(--h) 62% var(--tile-l))}
+.topic .name{font-weight:700;font-size:17px;overflow-wrap:anywhere}
+.meta{color:var(--muted);font-size:13px}
+.badge{font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap;font-variant-numeric:tabular-nums}
+.badge.done{background:transparent;color:var(--faint);padding-inline:4px;display:flex}
+
+/* Lern-Buttons */
+.study{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.sbtn{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:16px;border-radius:18px;border:1px solid var(--line);background:var(--surface);text-align:start}
+.sbtn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.sbtn b{font-size:16px;display:block}
+.sbtn small{font-size:13px;opacity:.75;font-variant-numeric:tabular-nums}
+
+/* Listen */
+.list{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:14px 16px;width:100%;background:none;border:0;border-top:1px solid var(--line);text-align:start}
+.row:first-child{border-top:0}
+.row:hover,.word:hover{background:color-mix(in srgb,var(--surface-2) 55%,transparent)}
+.row .fold{color:var(--accent);flex:none;display:flex}
+.row .grow{flex:1;min-width:0}
+.row .name{font-weight:600;overflow-wrap:anywhere}
+.row .chev{color:var(--faint);display:flex}
+
+.word{display:grid;grid-template-columns:8px 1fr;column-gap:14px;row-gap:2px;padding:13px 16px;width:100%;background:none;border:0;border-top:1px solid var(--line);text-align:start}
+.word:first-child{border-top:0}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--faint);margin-top:.6em;opacity:.7}
+.dot.l0{background:var(--bad);opacity:1}.dot.l1{background:var(--hard);opacity:1}.dot.l2{background:var(--good);opacity:1}.dot.l3{background:var(--easy);opacity:1}
+.w-main{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;min-width:0}
+.w-front{font-weight:700;overflow-wrap:anywhere}
+.w-sep{color:var(--faint)}
+.w-back{overflow-wrap:anywhere}
+.w-ex{grid-column:2;color:var(--muted);font-size:13.5px;overflow-wrap:anywhere}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 2px 0;color:var(--muted);font-size:12px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend .dot{margin:0}
+
+.empty{text-align:center;padding:48px 20px;color:var(--muted);border:1.5px dashed var(--line);border-radius:18px;margin-top:22px}
+.empty b{display:block;color:var(--text);font-size:17px;margin-bottom:4px}
+
+.fab{position:fixed;right:max(18px,calc(50% - 320px + 18px));bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:20;width:58px;height:58px;border-radius:18px;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;box-shadow:var(--shadow);transition:transform .15s}
+.fab:active{transform:scale(.93)}
+
+/* Karteikarten */
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+.chip{font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:999px;background:var(--surface-2);color:var(--muted);font-variant-numeric:tabular-nums}
+.chip b{color:var(--text)}
+.fc{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:36px 22px;min-height:min(52vh,380px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;cursor:pointer}
+.fc.enter{animation:pop .28s ease}
+.fc .tag{position:absolute;top:14px;left:16px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);font-weight:700}
+.fc .q{font-size:clamp(26px,7vw,36px);font-weight:800;letter-spacing:-.02em;line-height:1.2;overflow-wrap:anywhere}
+.fc .q.ar{font-size:clamp(30px,8.5vw,42px);font-weight:600}
+.fc hr{width:50%;border:0;border-top:1.5px dashed var(--line);margin:4px 0}
+.fc .a{font-size:clamp(22px,6vw,30px);font-weight:700;color:var(--accent);overflow-wrap:anywhere}
+.fc .a.ar{font-size:clamp(26px,7.5vw,36px);font-weight:600}
+.fc .ex{color:var(--muted);max-width:40ch;overflow-wrap:anywhere}
+.fc .hint{color:var(--faint);font-size:13px}
+.actions{position:sticky;bottom:calc(12px + env(safe-area-inset-bottom,0px));margin-top:16px}
+.rate{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.rate button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 4px;border-radius:16px;border:0;font-weight:700;font-size:14.5px;color:var(--c);background:color-mix(in srgb,var(--c) 15%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 30%,transparent)}
+.rate button small{font-size:12px;font-weight:600;opacity:.8;font-variant-numeric:tabular-nums}
+.rate button:active{transform:scale(.96)}
+@media (max-width:360px){.rate{grid-template-columns:1fr 1fr}}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 18px;border-radius:14px;border:0;font-weight:700;font-size:15.5px}
+.btn.block{width:100%}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:var(--surface-2)}
+.btn.danger{background:color-mix(in srgb,var(--bad) 14%,var(--surface));color:var(--bad)}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btns .btn{flex:1 1 140px}
+
+.center{text-align:center;padding:40px 8px}
+.bigicon{width:72px;height:72px;border-radius:22px;margin:0 auto 18px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.center h2{font-size:24px;margin:0 0 6px;letter-spacing:-.02em;text-wrap:balance}
+.center p{color:var(--muted);margin:0 auto 24px;max-width:38ch}
+.countdown{font-size:44px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin:-8px 0 22px}
+
+/* Quiz */
+.prog{height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin:6px 0 16px}
+.prog i{display:block;height:100%;background:var(--accent);border-radius:inherit;transition:width .35s ease}
+.qcard{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:28px 20px;text-align:center;margin-bottom:14px;animation:pop .28s ease}
+.qcard .q{font-size:clamp(24px,7vw,32px);font-weight:800;letter-spacing:-.02em;overflow-wrap:anywhere}
+.qcard .q.ar{font-weight:600;font-size:clamp(28px,8vw,38px)}
+.qcard .hint{color:var(--muted);font-size:13px;margin-top:6px}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{display:flex;align-items:center;gap:14px;padding:15px 16px;border-radius:16px;background:var(--surface);border:1.5px solid var(--line);font-size:16.5px;font-weight:600;text-align:start;width:100%;transition:border-color .15s,background .15s}
+.opt .k{width:28px;height:28px;flex:none;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--muted)}
+.opt .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.opt:not(:disabled):hover{border-color:color-mix(in srgb,var(--accent) 60%,var(--line))}
+.opt:disabled{opacity:1;cursor:default}
+.opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 13%,var(--surface))}
+.opt.right .k{background:var(--good);color:#fff}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 13%,var(--surface))}
+.opt.wrong .k{background:var(--bad);color:#fff}
+.opt.dim{opacity:.5}
+.qex{color:var(--muted);text-align:center;margin:14px 0 0;overflow-wrap:anywhere}
+.score{font-size:64px;font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.score small{font-size:28px;color:var(--muted);font-weight:700}
+
+/* Sheets */
+.backdrop{position:fixed;inset:0;z-index:50;background:rgb(0 0 0 / .55);display:flex;align-items:flex-end;justify-content:center;animation:fade .2s ease}
+.sheet{width:100%;max-width:560px;max-height:92%;overflow:auto;background:var(--surface);border-radius:24px 24px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom,0px));animation:up .26s cubic-bezier(.2,.8,.2,1)}
+.sheet .grip{width:40px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 14px}
+.sheet h3{margin:0 0 16px;font-size:20px;letter-spacing:-.01em}
+@media (min-width:700px){.backdrop{align-items:center}.sheet{border-radius:24px;padding-bottom:22px}.sheet .grip{display:none}.sheet h3{margin-top:8px}}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:13px;font-weight:600;color:var(--muted)}
+.field label em{font-style:normal;color:var(--faint);font-weight:500}
+.input{width:100%;padding:13px 14px;border-radius:13px;border:1.5px solid var(--line);background:var(--bg);color:var(--text);font:inherit;font-size:16px;resize:vertical}
+.input:focus{outline:none;border-color:var(--accent)}
+.menu-list{display:flex;flex-direction:column;gap:6px}
+.menu-item{display:flex;align-items:center;gap:14px;padding:14px;border-radius:14px;border:0;background:var(--surface-2);text-align:start;font-weight:600;font-size:15.5px}
+.menu-item .mi{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);flex:none}
+.menu-item small{display:block;color:var(--muted);font-weight:500;font-size:13px}
+.menu-item.danger{color:var(--bad)}
+.menu-item.danger .mi{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+
+/* Drawer */
+.drawer-bg{position:fixed;inset:0;z-index:60;background:rgb(0 0 0 / .55);animation:fade .2s ease}
+.drawer{position:absolute;left:0;top:0;bottom:0;width:min(330px,88vw);overflow:auto;background:var(--surface);padding:calc(18px + env(safe-area-inset-top,0px)) 18px calc(24px + env(safe-area-inset-bottom,0px));animation:slide .26s cubic-bezier(.2,.8,.2,1)}
+.drawer .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.drawer h4{margin:24px 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;border-radius:13px;background:var(--surface-2)}
+.seg.col{grid-auto-flow:row}
+.seg button{padding:10px 8px;border-radius:10px;border:0;background:none;color:var(--muted);font-weight:600;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgb(0 0 0 / .15)}
+.swatches{display:flex;flex-wrap:wrap;gap:12px;padding:2px}
+.sw{width:36px;height:36px;border-radius:50%;border:0;background:var(--c);box-shadow:0 0 0 3px var(--surface),0 0 0 5px transparent}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--c)}
+.drawer .note{color:var(--faint);font-size:12.5px;margin-top:8px}
+.drawer .menu-item{background:transparent;padding:10px 6px}
+
+/* Onboarding */
+.onb{position:fixed;inset:0;z-index:80;background:var(--bg);overflow:auto;padding:calc(40px + env(safe-area-inset-top,0px)) 20px calc(30px + env(safe-area-inset-bottom,0px))}
+.onb-in{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.logo{width:64px;height:64px;border-radius:20px;background:var(--accent);display:grid;place-items:center;color:var(--accent-ink)}
+.onb h2{font-size:30px;line-height:1.15;letter-spacing:-.03em;margin:6px 0 0;text-wrap:balance}
+.onb p{color:var(--muted);margin:0}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mode{display:flex;flex-direction:column;gap:10px;align-items:center;padding:12px 8px 14px;border-radius:18px;border:2px solid var(--line);background:var(--surface);font-weight:700}
+.mode[aria-pressed="true"]{border-color:var(--accent)}
+.prev{width:100%;aspect-ratio:3/4;max-width:100%;border-radius:10px;overflow:hidden;display:flex;flex-direction:column;gap:5px;padding:8px;border:1px solid var(--line)}
+.prev i{display:block;height:9px;border-radius:4px}
+.prev.d{background:#0D0F13}.prev.d i{background:#272C37}.prev.d i:first-child{background:var(--accent);width:45%}
+.prev.l{background:#F4F5F8}.prev.l i{background:#DFE2E9}.prev.l i:first-child{background:var(--accent);width:45%}
+.prev.s{background:linear-gradient(135deg,#0D0F13 50%,#F4F5F8 50%)}.prev.s i{background:#8C94A6aa}.prev.s i:first-child{background:var(--accent);width:45%}
+.check{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);cursor:pointer}
+.check input{width:20px;height:20px;accent-color:var(--accent);margin:1px 0 0;flex:none}
+.check small{display:block;color:var(--muted)}
+
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:90;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:var(--shadow);animation:up .2s ease;max-width:calc(100% - 32px)}
+
+@keyframes fade{from{opacity:0}}
+@keyframes up{from{transform:translateY(24px);opacity:0}}
+@keyframes slide{from{transform:translateX(-100%)}}
+@keyframes pop{from{transform:scale(.97);opacity:0}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+<!--artifact-head-end-->
+</head>
+<body>
+<!--artifact-body-start-->
+<div id="app" class="wrap"></div>
+<div id="layer"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- Daten ---------- */
+const KEY = 'notez-v1';
+const DEFAULT_SETTINGS = { theme: 'dark', accent: 'teal', dir: 'front', onboarded: false };
+const RATINGS = [
+  { label: 'Schlecht', t: '1 Min',  ms: 60e3,          c: 'var(--bad)' },
+  { label: 'Geht so',  t: '15 Min', ms: 15 * 60e3,     c: 'var(--hard)' },
+  { label: 'Gut',      t: '6 Std',  ms: 6 * 3600e3,    c: 'var(--good)' },
+  { label: 'Perfekt',  t: '1 Tag',  ms: 24 * 3600e3,   c: 'var(--easy)' },
+];
+const ACCENTS = {
+  teal:   { name: 'Türkis',  d: '#2EC4B0', l: '#0B8F80' },
+  blue:   { name: 'Blau',    d: '#5B9BFF', l: '#2463E0' },
+  violet: { name: 'Violett', d: '#A193FF', l: '#6A55D6' },
+  amber:  { name: 'Gold',    d: '#F5B53D', l: '#B0700A' },
+  rose:   { name: 'Rosa',    d: '#F2709A', l: '#D12F66' },
+  green:  { name: 'Grün',    d: '#4CC77F', l: '#1B8A4B' },
+};
+
+let db = load();
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && Array.isArray(d.folders) && Array.isArray(d.cards)) {
+      d.settings = Object.assign({}, DEFAULT_SETTINGS, d.settings);
+      return d;
+    }
+  } catch (e) {}
+  return { folders: [], cards: [], settings: Object.assign({}, DEFAULT_SETTINGS) };
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
+}
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const folder = id => db.folders.find(f => f.id === id);
+const childFolders = pid => db.folders.filter(f => f.parentId === pid);
+function subtreeIds(id) {
+  const ids = [id];
+  for (let i = 0; i < ids.length; i++) childFolders(ids[i]).forEach(f => ids.push(f.id));
+  return ids;
+}
+function cardsIn(id, deep) {
+  const ids = new Set(deep ? subtreeIds(id) : [id]);
+  return db.cards.filter(c => ids.has(c.folderId));
+}
+const dueCount = cards => { const now = Date.now(); return cards.filter(c => c.due <= now).length; };
+function pathOf(id) {
+  const p = [];
+  for (let f = folder(id); f; f = folder(f.parentId)) p.unshift(f);
+  return p;
+}
+
+/* ---------- Helfer ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+const isAr = s => /[֐-ࣿﭐ-﷿ﹰ-﻿]/.test(s || '');
+const txt = (s, cls = '') => `<span class="${cls}${isAr(s) ? ' ar' : ''}" dir="auto">${esc(s)}</span>`;
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const norm = s => String(s || '').trim().toLowerCase();
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+function hue(s) { let h = 0; for (const ch of s) h = (h * 31 + ch.codePointAt(0)) % 360; return h; }
+function when(ts) {
+  const diff = ts - Date.now();
+  if (diff < 60e3) return 'gleich';
+  if (diff < 3600e3) return `in ${Math.round(diff / 60e3)} Min`;
+  const d = new Date(ts), now = new Date();
+  const hm = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  const day = (a) => new Date(a.getFullYear(), a.getMonth(), a.getDate()).getTime();
+  const days = Math.round((day(d) - day(now)) / 864e5);
+  if (days === 0) return `heute um ${hm}`;
+  if (days === 1) return `morgen um ${hm}`;
+  return `am ${d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })} um ${hm}`;
+}
+
+const ICONS = {
+  menu: '<path d="M4 7h16M4 12h16M4 17h10"/>',
+  back: '<path d="M15 5l-7 7 7 7"/>',
+  more: '<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  folder: '<path d="M3.5 7.5a2 2 0 0 1 2-2h3.8l2.2 2.3h7a2 2 0 0 1 2 2v7.7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
+  chev: '<path d="M9.5 5.5l6.5 6.5-6.5 6.5"/>',
+  cards: '<rect x="3" y="7" width="13" height="13" rx="2.5"/><path d="M7.5 3.5h10a3 3 0 0 1 3 3v10"/>',
+  quiz: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.2-1 .8-1 1.4v.3M12 16.9v.1"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  word: '<path d="M4 6h16M4 12h10M4 18h13"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  upload: '<path d="M12 20V9M7 14l5-5 5 5M5 4h14"/>',
+  trophy: '<path d="M8 4h8v6a4 4 0 0 1-8 0zM8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 14v4M8 20h8"/>',
+  logo: '<rect x="3.5" y="7" width="13" height="13" rx="2.5"/><path d="M7.5 3.5h10a3 3 0 0 1 3 3v10"/><path d="M7 13.5h6M7 16.5h4"/>',
+};
+const icon = (n, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
+
+/* ---------- Farbe & Modus ---------- */
+const mqLight = window.matchMedia ? matchMedia('(prefers-color-scheme: light)') : { matches: false };
+function applyTheme() {
+  const s = db.settings;
+  const mode = s.theme === 'system' ? (mqLight.matches ? 'light' : 'dark') : s.theme;
+  const root = document.documentElement;
+  root.dataset.mode = mode;
+  const a = ACCENTS[s.accent] || ACCENTS.teal;
+  root.style.setProperty('--accent', mode === 'light' ? a.l : a.d);
+  root.style.setProperty('--accent-ink', mode === 'light' ? '#FFFFFF' : '#0D0F13');
+  const meta = $('meta[name="theme-color"]');
+  if (meta) meta.content = mode === 'light' ? '#F4F5F8' : '#0D0F13';
+}
+if (mqLight.addEventListener) mqLight.addEventListener('change', () => { if (db.settings.theme === 'system') applyTheme(); });
+
+/* ---------- Router ---------- */
+const app = $('#app');
+const layer = $('#layer');
+let timers = [];
+const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+const every = (fn, ms) => timers.push(setInterval(fn, ms));
+function clearTimers() { timers.forEach(t => { clearTimeout(t); clearInterval(t); }); timers = []; }
+
+let view = { name: 'home' };
+function go(hash) { if (location.hash === hash || (!location.hash && hash === '#')) route(); else location.hash = hash; }
+function route() {
+  clearTimers();
+  closeLayer();
+  const m = location.hash.slice(1).match(/^(f|learn|quiz)-(\w+)$/);
+  if (m && folder(m[2])) {
+    view = { name: m[1], id: m[2] };
+    ({ f: renderFolder, learn: startLearn, quiz: startQuiz })[m[1]](m[2]);
+  } else {
+    view = { name: 'home' };
+    renderHome();
+  }
+  window.scrollTo(0, 0);
+  onScroll();
+}
+window.addEventListener('hashchange', route);
+function onScroll() { const t = $('.topbar'); if (t) t.classList.toggle('scrolled', window.scrollY > 40); }
+window.addEventListener('scroll', onScroll, { passive: true });
+
+function topbar({ left, title = '', right = '', always = false }) {
+  return `<header class="topbar">${left}<div class="title${always ? ' always' : ''}">${esc(title)}</div>${right}</header>`;
+}
+const backBtn = (hash, label = 'Zurück') => `<button class="iconbtn" data-go="${hash}" aria-label="${label}">${icon('back')}</button>`;
+function bindCommon() {
+  $$('[data-go]', app).forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
+}
+const parentHash = f => f.parentId ? `#f-${f.parentId}` : '#';
+
+/* ---------- Startseite ---------- */
+function renderHome() {
+  const topics = childFolders(null);
+  const totalDue = dueCount(db.cards);
+  app.innerHTML = `
+    ${topbar({ left: `<button class="iconbtn" id="menuBtn" aria-label="Menü">${icon('menu')}</button>`, title: '', right: '' })
+      .replace('<div class="title">', '<div class="title always"><div class="brand"><i></i>Notez</div>')}
+    <h1 class="page">Deine Themen</h1>
+    <p class="lead">${topics.length
+      ? (totalDue ? `Heute ${totalDue === 1 ? 'ist 1 Wort' : `sind ${totalDue} Wörter`} fällig.` : 'Alles wiederholt. Gut gemacht!')
+      : 'Leg dein erstes Thema an, zum Beispiel „Arabisch“ oder „Mathe“.'}</p>
+    ${topics.length ? `<div class="topics">${topics.map(topicTile).join('')}</div>` : `
+      <div class="empty"><b>Noch keine Themen</b>Tippe unten rechts auf <strong>+</strong>, um zu starten.</div>`}
+    <button class="fab" id="fab" aria-label="Neues Thema">${icon('plus', 26)}</button>`;
+  $('#menuBtn').addEventListener('click', openDrawer);
+  $('#fab').addEventListener('click', () => folderSheet(null));
+  $$('.topic', app).forEach(b => b.addEventListener('click', () => go(`#f-${b.dataset.id}`)));
+}
+function topicTile(f) {
+  const cards = cardsIn(f.id, true);
+  const due = dueCount(cards);
+  const subs = childFolders(f.id).length;
+  const first = Array.from(f.name.trim())[0] || '?';
+  return `<button class="topic" data-id="${f.id}">
+    <span class="tile" style="--h:${hue(f.name)}"><span dir="auto">${esc(first.toUpperCase())}</span></span>
+    <span style="min-width:0"><div class="name" dir="auto">${esc(f.name)}</div>
+      <div class="meta">${subs ? plural(subs, 'Kategorie', 'Kategorien') + ' · ' : ''}${plural(cards.length, 'Wort', 'Wörter')}</div></span>
+    ${cards.length ? (due ? `<span class="badge">${due} fällig</span>` : `<span class="badge done" title="Alles wiederholt">${icon('check', 18)}</span>`) : '<span></span>'}
+  </button>`;
+}
+
+/* ---------- Themen- / Kategorie-Ansicht ---------- */
+function renderFolder(id) {
+  const f = folder(id);
+  const path = pathOf(id);
+  const subs = childFolders(id);
+  const own = cardsIn(id, false);
+  const all = cardsIn(id, true);
+  const due = dueCount(all);
+  const isTopic = !f.parentId;
+  app.innerHTML = `
+    ${topbar({ left: backBtn(parentHash(f)), title: f.name,
+      right: `<button class="iconbtn" id="moreBtn" aria-label="Optionen">${icon('more')}</button>` })}
+    ${path.length > 1 ? `<div class="crumb" dir="auto">${path.slice(0, -1).map(p => esc(p.name)).join(' › ')}</div>` : ''}
+    <h1 class="page" dir="auto">${esc(f.name)}</h1>
+    <p class="lead">${subs.length ? plural(subs.length, 'Kategorie', 'Kategorien') + ' · ' : ''}${plural(all.length, 'Wort', 'Wörter')}</p>
+
+    <div class="study">
+      <button class="sbtn primary" data-go="#learn-${id}" ${all.length ? '' : 'disabled'}>
+        ${icon('cards', 24)}<span><b>Karteikarten</b><small>${all.length ? (due ? `${due} fällig` : 'Alles wiederholt') : 'Noch keine Wörter'}</small></span>
+      </button>
+      <button class="sbtn" data-go="#quiz-${id}" ${all.length >= 2 ? '' : 'disabled'}>
+        ${icon('quiz', 24)}<span><b>Quiz</b><small>${all.length >= 2 ? '4 Antworten zur Wahl' : 'Ab 2 Wörtern'}</small></span>
+      </button>
+    </div>
+
+    ${subs.length ? `
+      <div class="section-h">Kategorien</div>
+      <div class="list">${subs.map(s => {
+        const c = cardsIn(s.id, true), d = dueCount(c), n = childFolders(s.id).length;
+        return `<button class="row" data-go="#f-${s.id}">
+          <span class="fold">${icon('folder')}</span>
+          <span class="grow"><div class="name" dir="auto">${esc(s.name)}</div>
+            <div class="meta">${n ? plural(n, 'Kategorie', 'Kategorien') + ' · ' : ''}${plural(c.length, 'Wort', 'Wörter')}</div></span>
+          ${d ? `<span class="badge">${d}</span>` : ''}<span class="chev">${icon('chev', 18)}</span>
+        </button>`; }).join('')}</div>` : ''}
+
+    ${own.length ? `
+      <div class="section-h">Wörter <span>${own.length}</span></div>
+      <div class="list">${own.map(wordRow).join('')}</div>
+      <div class="legend">
+        <span><i class="dot"></i>Neu</span><span><i class="dot l0"></i>Schlecht</span><span><i class="dot l1"></i>Geht so</span>
+        <span><i class="dot l2"></i>Gut</span><span><i class="dot l3"></i>Perfekt</span>
+      </div>` : ''}
+
+    ${!subs.length && !own.length ? `
+      <div class="empty"><b>Hier ist noch nichts</b>Tippe auf <strong>+</strong>, um Wörter oder eine Unterkategorie hinzuzufügen.</div>` : ''}
+
+    <button class="fab" id="fab" aria-label="Hinzufügen">${icon('plus', 26)}</button>`;
+  bindCommon();
+  $('#fab').addEventListener('click', () => addChoice(id));
+  $('#moreBtn').addEventListener('click', () => folderMenu(f, isTopic));
+  $$('.word', app).forEach(b => b.addEventListener('click', () => cardSheet(id, db.cards.find(c => c.id === b.dataset.id))));
+}
+function wordRow(c) {
+  return `<button class="word" data-id="${c.id}">
+    <i class="dot${c.lvl >= 0 ? ' l' + c.lvl : ''}"></i>
+    <span class="w-main">${txt(c.front, 'w-front')}<span class="w-sep">—</span>${txt(c.back, 'w-back')}</span>
+    ${c.example ? `<span class="w-ex" dir="auto">${esc(c.example)}</span>` : ''}
+  </button>`;
+}
+
+/* ---------- Sheets ---------- */
+function closeLayer() { layer.innerHTML = ''; }
+function sheet(html, { onClose } = {}) {
+  layer.innerHTML = `<div class="backdrop"><div class="sheet" role="dialog" aria-modal="true"><div class="grip"></div>${html}</div></div>`;
+  const bd = $('.backdrop', layer);
+  bd.addEventListener('click', e => { if (e.target === bd) { closeLayer(); onClose && onClose(); } });
+  $$('[data-close]', layer).forEach(b => b.addEventListener('click', () => { closeLayer(); onClose && onClose(); }));
+  const first = $('input, textarea', layer);
+  if (first) setTimeout(() => first.focus(), 60);
+  return $('.sheet', layer);
+}
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg; t.setAttribute('role', 'status');
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1800);
+}
+function confirmSheet(title, text, okLabel, onOk) {
+  const s = sheet(`<h3>${esc(title)}</h3><p style="color:var(--muted);margin:-6px 0 20px">${esc(text)}</p>
+    <div class="btns"><button class="btn ghost" data-close>Abbrechen</button><button class="btn danger" id="ok">${esc(okLabel)}</button></div>`);
+  $('#ok', s).addEventListener('click', () => { closeLayer(); onOk(); });
+}
+
+function addChoice(fid) {
+  const s = sheet(`<h3>Hinzufügen</h3><div class="menu-list">
+    <button class="menu-item" id="addWord"><span class="mi">${icon('word')}</span><span>Wort hinzufügen<small>Wort, Übersetzung und optional ein Beispielsatz</small></span></button>
+    <button class="menu-item" id="addFolder"><span class="mi">${icon('folder')}</span><span>Unterkategorie erstellen<small>z. B. „Einkaufen“, „Verben“ oder „Sätze“</small></span></button>
+  </div>`);
+  $('#addWord', s).addEventListener('click', () => cardSheet(fid));
+  $('#addFolder', s).addEventListener('click', () => folderSheet(fid));
+}
+
+function folderSheet(parentId, existing) {
+  const isTopic = existing ? !existing.parentId : !parentId;
+  const noun = isTopic ? 'Thema' : 'Kategorie';
+  const s = sheet(`<form id="ff" autocomplete="off">
+    <h3>${existing ? `${noun} umbenennen` : isTopic ? 'Neues Thema' : 'Neue Kategorie'}</h3>
+    <div class="field"><label for="f-name">Name</label>
+      <input class="input" id="f-name" dir="auto" maxlength="60" required value="${esc(existing ? existing.name : '')}" placeholder="${isTopic ? 'z. B. Arabisch' : 'z. B. Einkaufen'}"></div>
+    <div class="btns"><button type="button" class="btn ghost" data-close>Abbrechen</button><button class="btn primary">${existing ? 'Speichern' : 'Erstellen'}</button></div>
+  </form>`);
+  $('#ff', s).addEventListener('submit', e => {
+    e.preventDefault();
+    const name = $('#f-name', s).value.trim();
+    if (!name) return;
+    if (existing) { existing.name = name; save(); closeLayer(); route(); return; }
+    const f = { id: uid(), parentId: parentId || null, name, created: Date.now() };
+    db.folders.push(f); save(); closeLayer();
+    go(`#f-${f.id}`);
+  });
+}
+
+function folderMenu(f, isTopic) {
+  const noun = isTopic ? 'Thema' : 'Kategorie';
+  const s = sheet(`<h3 dir="auto">${esc(f.name)}</h3><div class="menu-list">
+    <button class="menu-item" id="mRename"><span class="mi">${icon('edit')}</span>${noun} umbenennen</button>
+    <button class="menu-item danger" id="mDelete"><span class="mi">${icon('trash')}</span>${noun} löschen</button>
+  </div>`);
+  $('#mRename', s).addEventListener('click', () => folderSheet(f.parentId, f));
+  $('#mDelete', s).addEventListener('click', () => {
+    const ids = subtreeIds(f.id);
+    const n = cardsIn(f.id, true).length;
+    confirmSheet(`${noun} löschen?`,
+      `„${f.name}“ wird mit ${plural(ids.length - 1, 'Unterkategorie', 'Unterkategorien')} und ${plural(n, 'Wort', 'Wörtern')} gelöscht. Das kann nicht rückgängig gemacht werden.`,
+      'Löschen', () => {
+        const set = new Set(ids);
+        db.folders = db.folders.filter(x => !set.has(x.id));
+        db.cards = db.cards.filter(c => !set.has(c.folderId));
+        save(); toast('Gelöscht'); go(parentHash(f));
+      });
+  });
+}
+
+function cardSheet(fid, card) {
+  const s = sheet(`<form id="cf" autocomplete="off">
+    <h3>${card ? 'Wort bearbeiten' : 'Neues Wort'}</h3>
+    <div class="field"><label for="c-front">Wort</label>
+      <input class="input" id="c-front" dir="auto" required enterkeyhint="next" placeholder="z. B. Buch" value="${esc(card ? card.front : '')}"></div>
+    <div class="field"><label for="c-back">Übersetzung / Erklärung</label>
+      <input class="input" id="c-back" dir="auto" required enterkeyhint="next" placeholder="z. B. كتاب - كتب" value="${esc(card ? card.back : '')}"></div>
+    <div class="field"><label for="c-ex">Beispielsatz <em>(optional)</em></label>
+      <textarea class="input" id="c-ex" dir="auto" rows="2" placeholder="z. B. Ich lese ein Buch.">${esc(card ? card.example : '')}</textarea></div>
+    <div class="btns">
+      ${card ? `<button type="button" class="btn danger" id="cDel">${icon('trash', 18)}Löschen</button><button class="btn primary">Speichern</button>`
+             : `<button type="button" class="btn ghost" id="cDone">Fertig</button><button class="btn primary">Speichern &amp; nächstes</button>`}
+    </div>
+  </form>`, { onClose: () => view.name === 'f' && renderFolder(fid) });
+  const fr = $('#c-front', s), bk = $('#c-back', s), ex = $('#c-ex', s);
+  fr.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); bk.focus(); } });
+  bk.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ex.focus(); } });
+  ex.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#cf', s).requestSubmit(); } });
+
+  function commit() {
+    const front = fr.value.trim(), back = bk.value.trim(), example = ex.value.trim();
+    if (!front || !back) { (front ? bk : fr).focus(); return false; }
+    if (card) Object.assign(card, { front, back, example });
+    else db.cards.push({ id: uid(), folderId: fid, front, back, example, due: 0, lvl: -1, reps: 0, created: Date.now() });
+    save();
+    return true;
+  }
+  $('#cf', s).addEventListener('submit', e => {
+    e.preventDefault();
+    if (!commit()) return;
+    if (card) { closeLayer(); renderFolder(fid); return; }
+    renderFolder(fid);
+    fr.value = bk.value = ex.value = ''; fr.focus();
+    toast('Gespeichert');
+  });
+  if (card) $('#cDel', s).addEventListener('click', () => confirmSheet('Wort löschen?', `„${card.front}“ wird gelöscht.`, 'Löschen', () => {
+    db.cards = db.cards.filter(c => c !== card); save(); renderFolder(fid);
+  }));
+  else $('#cDone', s).addEventListener('click', () => {
+    if ((fr.value.trim() || bk.value.trim()) && !commit()) return;
+    closeLayer(); renderFolder(fid);
+  });
+}
+
+/* ---------- Karteikarten ---------- */
+let L = null;
+function pickSide() { const d = db.settings.dir; return d === 'back' ? false : d === 'mixed' ? Math.random() < .5 : true; }
+
+function startLearn(fid) {
+  L = { fid, practice: false, queue: [], card: null, showFront: true, revealed: false, done: 0 };
+  nextCard();
+}
+function learnShell(inner, sub = '') {
+  const f = folder(L.fid);
+  app.innerHTML = `${topbar({ left: backBtn(`#f-${L.fid}`), title: L.practice ? 'Freies Üben' : 'Karteikarten', always: true })}
+    <div class="crumb" dir="auto">${esc(pathOf(L.fid).map(p => p.name).join(' › '))}</div>${sub}${inner}`;
+  bindCommon();
+}
+function nextCard() {
+  clearTimers();
+  const pool = cardsIn(L.fid, true);
+  if (!pool.length) return go(`#f-${L.fid}`);
+  let card;
+  if (L.practice) {
+    card = db.cards.find(c => c.id === L.queue[0]);
+    if (!card) return learnDone(true);
+  } else {
+    const now = Date.now();
+    card = pool.filter(c => c.due <= now).sort((a, b) => a.due - b.due)[0];
+    if (!card) {
+      const next = pool.reduce((m, c) => (c.due < m.due ? c : m));
+      return next.due - now <= 20 * 60e3 ? learnWait(next) : learnDone(false, next);
+    }
+  }
+  L.card = card; L.showFront = pickSide(); L.revealed = false;
+  drawCard();
+}
+function drawCard() {
+  const c = L.card;
+  const q = L.showFront ? c.front : c.back, a = L.showFront ? c.back : c.front;
+  const left = L.practice ? L.queue.length : dueCount(cardsIn(L.fid, true));
+  learnShell(`
+    <div class="fc${L.revealed ? '' : ' enter'}" id="fc" role="button" tabindex="0" aria-label="Antwort zeigen">
+      <span class="tag">${L.showFront ? 'Wort' : 'Übersetzung'}</span>
+      ${txt(q, 'q')}
+      ${L.revealed ? `<hr>${txt(a, 'a')}${c.example ? `<div class="ex" dir="auto">${esc(c.example)}</div>` : ''}`
+                   : '<div class="hint">Tippe, um die Antwort zu sehen</div>'}
+    </div>
+    <div class="actions">${L.revealed
+      ? `<div class="rate">${RATINGS.map((r, i) => `<button data-rate="${i}" style="--c:${r.c}">${r.label}<small>${r.t}</small></button>`).join('')}</div>`
+      : '<button class="btn primary block" id="reveal">Antwort zeigen</button>'}</div>`,
+    `<div class="stats"><span class="chip">${L.practice ? 'Übrig' : 'Fällig'} <b>${left}</b></span><span class="chip">Heute gelernt <b>${L.done}</b></span></div>`);
+  if (!L.revealed) {
+    $('#reveal').addEventListener('click', reveal);
+    $('#fc').addEventListener('click', reveal);
+  }
+  $$('[data-rate]', app).forEach(b => b.addEventListener('click', () => rate(+b.dataset.rate)));
+}
+function reveal() { if (!L.revealed) { L.revealed = true; drawCard(); } }
+function rate(i) {
+  const c = L.card;
+  c.due = Date.now() + RATINGS[i].ms; c.lvl = i; c.reps = (c.reps || 0) + 1;
+  save(); L.done++;
+  if (L.practice) {
+    L.queue.shift();
+    if (i === 0) L.queue.splice(Math.min(3, L.queue.length), 0, c.id);
+    if (i === 1) L.queue.splice(Math.min(8, L.queue.length), 0, c.id);
+  }
+  nextCard();
+}
+function learnWait(next) {
+  const tick = () => {
+    const s = Math.max(0, Math.ceil((next.due - Date.now()) / 1000));
+    const el = $('#cd');
+    if (el) el.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    if (s <= 0) nextCard();
+  };
+  learnShell(`<div class="center"><div class="bigicon">${icon('clock', 34)}</div>
+    <h2>Kurze Pause</h2><p>Gerade ist nichts fällig. Die nächste Karte kommt in</p>
+    <div class="countdown" id="cd">0:00</div>
+    <div class="btns"><button class="btn ghost" data-go="#f-${L.fid}">Fertig</button><button class="btn primary" id="now">Jetzt weiterlernen</button></div></div>`);
+  tick(); every(tick, 1000);
+  $('#now').addEventListener('click', () => { clearTimers(); L.card = next; L.showFront = pickSide(); L.revealed = false; drawCard(); });
+}
+function learnDone(practice, next) {
+  learnShell(`<div class="center"><div class="bigicon">${icon('check', 36)}</div>
+    <h2>${practice ? 'Übung beendet' : 'Alles wiederholt!'}</h2>
+    <p>${practice ? `Du hast ${plural(L.done, 'Karte', 'Karten')} geübt.` : `Die nächste Karte ist ${when(next.due)} fällig.`}</p>
+    <div class="btns"><button class="btn ghost" data-go="#f-${L.fid}">Zurück</button>
+    <button class="btn primary" id="practice">${practice ? 'Nochmal üben' : 'Trotzdem üben'}</button></div></div>`);
+  $('#practice').addEventListener('click', () => {
+    L.practice = true; L.queue = shuffle(cardsIn(L.fid, true)).map(c => c.id);
+    nextCard();
+  });
+}
+
+/* ---------- Quiz ---------- */
+let Q = null;
+function startQuiz(fid) {
+  const pool = cardsIn(fid, true);
+  if (pool.length < 2) return go(`#f-${fid}`);
+  const qs = shuffle(pool).slice(0, 10).map(c => makeQuestion(c, pool));
+  Q = { fid, qs, i: 0, score: 0, answered: false, wrong: [] };
+  drawQuestion();
+}
+function makeQuestion(c, pool) {
+  const fr = pickSide();
+  const side = fr ? 'back' : 'front';
+  const answer = c[side];
+  const seen = new Set([norm(answer)]);
+  const opts = [];
+  const take = list => { for (const t of shuffle(list)) { if (opts.length >= 3) break; if (t && !seen.has(norm(t))) { seen.add(norm(t)); opts.push(t); } } };
+  take(pool.filter(x => x !== c).map(x => x[side]));
+  if (opts.length < 3) take(db.cards.map(x => x[side]));
+  return { c, prompt: fr ? c.front : c.back, answer, fr, opts: shuffle([answer, ...opts]) };
+}
+function drawQuestion() {
+  const q = Q.qs[Q.i];
+  app.innerHTML = `${topbar({ left: backBtn(`#f-${Q.fid}`), title: 'Quiz', always: true })}
+    <div class="crumb" dir="auto">${esc(pathOf(Q.fid).map(p => p.name).join(' › '))} · Frage ${Q.i + 1} von ${Q.qs.length}</div>
+    <div class="prog"><i style="width:${(Q.i / Q.qs.length) * 100}%"></i></div>
+    <div class="qcard">${txt(q.prompt, 'q')}<div class="hint">${q.fr ? 'Was ist die richtige Übersetzung?' : 'Welches Wort passt?'}</div></div>
+    <div class="opts">${q.opts.map((o, i) => `<button class="opt" data-i="${i}"><span class="k">${i + 1}</span>${txt(o, 't')}</button>`).join('')}</div>
+    <div id="after"></div>`;
+  bindCommon();
+  Q.answered = false;
+  $$('.opt', app).forEach(b => b.addEventListener('click', () => answer(+b.dataset.i)));
+}
+function answer(i) {
+  if (Q.answered) return;
+  Q.answered = true;
+  const q = Q.qs[Q.i];
+  const ok = q.opts[i] === q.answer;
+  if (ok) Q.score++; else Q.wrong.push(q.c);
+  $$('.opt', app).forEach((b, j) => {
+    b.disabled = true;
+    if (q.opts[j] === q.answer) b.classList.add('right');
+    else if (j === i) b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+  $('#after').innerHTML = `${q.c.example ? `<p class="qex" dir="auto">${esc(q.c.example)}</p>` : ''}
+    <div class="actions"><button class="btn primary block" id="nextQ">${Q.i + 1 < Q.qs.length ? 'Weiter' : 'Ergebnis ansehen'}</button></div>`;
+  $('#nextQ').addEventListener('click', nextQuestion);
+  if (ok && !q.c.example) later(nextQuestion, 900);
+}
+function nextQuestion() {
+  clearTimers();
+  Q.i++;
+  if (Q.i < Q.qs.length) return drawQuestion();
+  const n = Q.qs.length, pct = Q.score / n;
+  app.innerHTML = `${topbar({ left: backBtn(`#f-${Q.fid}`), title: 'Quiz', always: true })}
+    <div class="center"><div class="bigicon">${icon('trophy', 34)}</div>
+      <div class="score">${Q.score}<small> / ${n}</small></div>
+      <h2 style="margin-top:14px">${pct >= .9 ? 'Stark!' : pct >= .6 ? 'Gut gemacht' : 'Dranbleiben'}</h2>
+      <p>${Q.wrong.length ? 'Diese Wörter solltest du nochmal anschauen:' : 'Alle Antworten richtig.'}</p>
+    </div>
+    ${Q.wrong.length ? `<div class="list" style="margin-top:-8px">${Q.wrong.map(wordRow).join('')}</div>` : ''}
+    <div class="btns" style="margin-top:22px"><button class="btn ghost" data-go="#f-${Q.fid}">Zurück</button><button class="btn primary" id="again">Neue Runde</button></div>`;
+  bindCommon();
+  $$('.word', app).forEach(b => { b.disabled = true; b.style.cursor = 'default'; });
+  $('#again').addEventListener('click', () => startQuiz(Q.fid));
+}
+
+/* ---------- Tastatur ---------- */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && layer.firstChild) { const bd = $('.backdrop, .drawer-bg', layer); bd && bd.click(); return; }
+  if (layer.firstChild || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if (view.name === 'learn' && L && L.card && $('#fc')) {
+    if ((e.key === ' ' || e.key === 'Enter') && !L.revealed) { e.preventDefault(); reveal(); }
+    else if (L.revealed && /^[1-4]$/.test(e.key)) rate(+e.key - 1);
+  } else if (view.name === 'quiz' && Q) {
+    if (!Q.answered && /^[1-4]$/.test(e.key)) { const b = $(`.opt[data-i="${+e.key - 1}"]`); b && b.click(); }
+    else if (Q.answered && e.key === 'Enter') { const b = $('#nextQ'); if (b) { e.preventDefault(); b.click(); } }
+  }
+});
+
+/* ---------- Menü ---------- */
+function openDrawer() {
+  const s = db.settings;
+  const seg = (key, opts, col) => `<div class="seg${col ? ' col' : ''}" data-key="${key}">${opts.map(([v, l]) =>
+    `<button data-v="${v}" aria-pressed="${s[key] === v}">${l}</button>`).join('')}</div>`;
+  layer.innerHTML = `<div class="drawer-bg"><nav class="drawer" aria-label="Menü">
+    <div class="head"><div class="brand"><i></i>Notez</div><button class="iconbtn" id="dClose" aria-label="Menü schließen">${icon('close')}</button></div>
+    <h4>Modus</h4>${seg('theme', [['dark', 'Dunkel'], ['light', 'Hell'], ['system', 'System']])}
+    <h4>App-Farbe</h4><div class="swatches">${Object.entries(ACCENTS).map(([k, a]) =>
+      `<button class="sw" data-accent="${k}" aria-pressed="${s.accent === k}" aria-label="${a.name}" title="${a.name}" style="--c:${document.documentElement.dataset.mode === 'light' ? a.l : a.d}"></button>`).join('')}</div>
+    <h4>Abfragen</h4>${seg('dir', [['front', 'Wort → Übersetzung'], ['back', 'Übersetzung → Wort'], ['mixed', 'Gemischt']], true)}
+    <div class="note">Gilt für Karteikarten und Quiz.</div>
+    <h4>Wiederholung</h4>
+    <div class="note" style="margin-top:0;line-height:1.7">${RATINGS.map(r => `<span style="color:${r.c};font-weight:700">${r.label}</span> → ${r.t}`).join('<br>')}</div>
+    <h4>Daten</h4>
+    <div class="menu-list">
+      <button class="menu-item" id="dExport"><span class="mi">${icon('download', 20)}</span><span>Backup speichern<small>Als Datei sichern</small></span></button>
+      <button class="menu-item" id="dImport"><span class="mi">${icon('upload', 20)}</span><span>Backup laden<small>Ersetzt die aktuellen Daten</small></span></button>
+      <button class="menu-item danger" id="dReset"><span class="mi">${icon('trash', 20)}</span><span>Alles löschen</span></button>
+    </div>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+    <div class="note" style="margin-top:22px">Deine Daten bleiben nur auf diesem Gerät gespeichert.</div>
+  </nav></div>`;
+  const bg = $('.drawer-bg', layer);
+  bg.addEventListener('click', e => { if (e.target === bg) closeLayer(); });
+  $('#dClose').addEventListener('click', closeLayer);
+  $$('.seg', layer).forEach(g => g.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    s[g.dataset.key] = b.dataset.v; save(); applyTheme();
+    $$('button', g).forEach(x => x.setAttribute('aria-pressed', x === b));
+    if (g.dataset.key === 'theme') $$('.sw', layer).forEach(sw => { const a = ACCENTS[sw.dataset.accent]; sw.style.setProperty('--c', document.documentElement.dataset.mode === 'light' ? a.l : a.d); });
+  }));
+  $$('.sw', layer).forEach(b => b.addEventListener('click', () => {
+    s.accent = b.dataset.accent; save(); applyTheme();
+    $$('.sw', layer).forEach(x => x.setAttribute('aria-pressed', x === b));
+  }));
+  $('#dExport').addEventListener('click', exportData);
+  $('#dImport').addEventListener('click', () => $('#importFile').click());
+  $('#importFile').addEventListener('change', e => importData(e.target.files[0]));
+  $('#dReset').addEventListener('click', () => confirmSheet('Alles löschen?', 'Alle Themen, Kategorien und Wörter werden gelöscht. Speichere vorher ein Backup, wenn du sie behalten willst.', 'Alles löschen', () => {
+    db.folders = []; db.cards = []; save(); toast('Alle Daten gelöscht'); go('#');
+  }));
+}
+function exportData() {
+  const data = JSON.stringify({ app: 'notez', version: 1, exported: new Date().toISOString(), folders: db.folders, cards: db.cards }, null, 2);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+  a.download = `notez-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast('Backup gespeichert');
+}
+function importData(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      if (!Array.isArray(d.folders) || !Array.isArray(d.cards)) throw new Error();
+      confirmSheet('Backup laden?', `${plural(d.folders.length, 'Ordner', 'Ordner')} und ${plural(d.cards.length, 'Wort', 'Wörter')} ersetzen deine aktuellen Daten.`, 'Laden', () => {
+        db.folders = d.folders; db.cards = d.cards; save(); toast('Backup geladen'); go('#');
+      });
+    } catch (e) { toast('Die Datei ist kein gültiges Notez-Backup.'); }
+  };
+  r.readAsText(file);
+}
+
+/* ---------- Erster Start ---------- */
+function onboarding() {
+  const el = document.createElement('div');
+  el.className = 'onb';
+  el.innerHTML = `<div class="onb-in">
+    <div class="logo">${icon('logo', 34)}</div>
+    <h2>Willkommen bei Notez</h2>
+    <p>Deine eigenen Karteikarten: Themen anlegen, Wörter eintragen und mit Karteikarten oder Quiz lernen.</p>
+    <p style="color:var(--text);font-weight:700;margin-top:10px">Wie soll die App aussehen?</p>
+    <div class="modes">${[['dark', 'Dunkel', 'd'], ['light', 'Hell', 'l'], ['system', 'System', 's']].map(([v, l, c]) =>
+      `<button class="mode" data-v="${v}" aria-pressed="${db.settings.theme === v}"><span class="prev ${c}"><i></i><i></i><i></i><i></i></span>${l}</button>`).join('')}</div>
+    <label class="check"><input type="checkbox" id="sample" checked><span><b>Beispiele hinzufügen</b><small>Arabisch, Tunesisch und Mathe zum Ausprobieren. Du kannst sie jederzeit löschen.</small></span></label>
+    <button class="btn primary block" id="start">Los geht’s</button>
+  </div>`;
+  document.body.appendChild(el);
+  $$('.mode', el).forEach(b => b.addEventListener('click', () => {
+    db.settings.theme = b.dataset.v; applyTheme();
+    $$('.mode', el).forEach(x => x.setAttribute('aria-pressed', x === b));
+  }));
+  $('#start', el).addEventListener('click', () => {
+    if ($('#sample', el).checked && !db.folders.length) seed();
+    db.settings.onboarded = true; save();
+    el.remove(); route();
+  });
+}
+function seed() {
+  const mk = (name, parentId = null) => { const f = { id: uid(), parentId, name, created: Date.now() }; db.folders.push(f); return f.id; };
+  const add = (fid, list) => list.forEach(([front, back, example = '']) =>
+    db.cards.push({ id: uid(), folderId: fid, front, back, example, due: 0, lvl: -1, reps: 0, created: Date.now() }));
+  const ar = mk('Arabisch');
+  const shop = mk('Einkaufen', ar);
+  add(mk('Vokabeln', shop), [
+    ['Brot', 'خبز'], ['Wasser', 'ماء'], ['Milch', 'حليب'], ['Geld', 'نقود'],
+    ['teuer', 'غالي'], ['billig', 'رخيص'], ['kaufen', 'اشترى - يشتري', 'أريد أن أشتري خبزًا.'],
+  ]);
+  add(mk('Sätze', shop), [
+    ['Wie viel kostet das?', 'بكم هذا؟'], ['Das ist zu teuer.', 'هذا غالٍ جدًا.'],
+  ]);
+  add(mk('Zuhause', ar), [
+    ['Buch', 'كتاب - كتب', 'هذا كتاب جميل.'], ['Haus', 'بيت - بيوت'], ['Zimmer', 'غرفة - غرف'], ['Tür', 'باب - أبواب'],
+  ]);
+  add(mk('Tunesisch'), [
+    ['Wie geht’s?', 'لاباس؟ (labès?)'], ['Danke', 'يعيشك (y3aychek)'], ['viel', 'برشا (barcha)', 'نحبك برشا'], ['Was?', 'شنوة؟ (chnowa?)'],
+  ]);
+  add(mk('Mathe'), [
+    ['Satz des Pythagoras', 'a² + b² = c²'], ['Fläche eines Kreises', 'π · r²'], ['Ableitung von x²', '2x'], ['Ableitung von sin(x)', 'cos(x)'],
+  ]);
+}
+
+/* ---------- Start ---------- */
+applyTheme();
+route();
+if (!db.settings.onboarded) onboarding();
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && document.querySelector('link[rel="manifest"]')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+})();
+</script>
+<!--artifact-body-end-->
+</body>
+</html>
